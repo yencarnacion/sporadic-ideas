@@ -149,7 +149,8 @@ function getStockValues() {
   return stockData;
 }
 
-var stockData = getStockValues();
+
+
 
 function scrapeTableData() {
     console.log("scrapeTableData is running");
@@ -180,6 +181,8 @@ function scrapeTableData() {
         }
     });
 
+    let stockData = getStockValues();
+    
     let amazonValue = stockData['AMZN'];
     let appleValue = stockData['AAPL'];
     let googValue  = stockData['GOOG'];
