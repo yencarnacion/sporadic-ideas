@@ -11,3 +11,6 @@ document.addEventListener('DOMContentLoaded', updateCounts);
 
 // Update the counts whenever they change in the storage
 chrome.storage.onChanged.addListener(updateCounts);
+
+// Refresh the counts every 5 seconds
+setInterval(updateCounts, 3000);
