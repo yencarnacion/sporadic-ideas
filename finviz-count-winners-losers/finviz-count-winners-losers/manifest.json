@@ -1,8 +1,11 @@
 {
     "name": "Table Scraper",
-    "version": "1.0",
+    "version": "1.1",
     "manifest_version": 3,
-    "permissions": ["activeTab", "storage", "scripting", "https://elite.finviz.com/*"],
+    "permissions": ["activeTab", "storage", "scripting"],
+    "host_permissions": [
+        "https://*.finviz.com/*"
+     ],
     "action": {
         "default_popup": "popup.html"
     },
@@ -11,7 +14,7 @@
     },
     "content_scripts": [
         {
-            "matches": ["https://elite.finviz.com/*"],
+            "matches": ["*://*.finviz.com/*"],
             "js": ["contentScript.js"]
         }
     ]
