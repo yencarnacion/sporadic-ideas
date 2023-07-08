@@ -14,14 +14,19 @@ function compareWith0style(percentage, targetNumber=0){
 // Table injection
 // Function to create and update the table
 function updateTable(aboveCount, belowCount, unchangedCount,
-                              amazonValue,
-                              appleValue,
-                              googValue,
-                              googlValue,
-                              metaValue,
-                              microsoftValue,
-                              nvidiaValue) {
-let stocktable = document.getElementById('dataExtractorTable');	
+                     amazonValue,
+                     appleValue,
+                     googValue,
+                     googlValue,
+                     metaValue,
+                     microsoftValue,
+                     nvidiaValue,
+                     maxChange,
+                     minChange,
+                     avgChange,
+                     medianChange,
+                     sdChange) {
+let stocktable = document.getElementById('stockdataExtractorTable');	
     if (!stocktable) {
 	stocktable = document.createElement('table');
         stocktable.id = 'stockdataExtractorTable';
@@ -62,6 +67,48 @@ let stocktable = document.getElementById('dataExtractorTable');
 	// Inject the table at the top of the body
         document.body.insertBefore(stocktable, document.body.firstChild);
     }
+
+    let statstable = document.getElementById('statsExtractorTable');
+    if (!statstable) {
+        // If the table doesn't exist yet, create it
+        statstable = document.createElement('table');
+        statstable.id = 'statsExtractorTable';
+	statstable.style.border = "1px solid white";
+
+	statstable.innerHTML = `
+        <tr style="border: 1px solid white;">
+           <th style="border: 1px solid white;">Min</th> 
+           <th style="border: 1px solid white;">Max</th>
+           <th style="border: 1px solid white;">Avg</th>
+           <th style="border: 1px solid white;">Median</th>
+           <th style="border: 1px solid white;">Std Dev</th> 
+        </tr>                                                                    
+        <tr style="border: 1px solid white;">
+           <td id="minChange" style="border: 1px solid white;"></td> 
+           <td id="maxChange" style="border: 1px solid white;"></td>
+           <td id="avgChange" style="border: 1px solid white;"></td>
+           <td id="medianChange" style="border: 1px solid white;"></td>
+           <td id="sdChange" style="border: 1px solid white;"></td>
+        </tr>`;
+	
+    	document.body.insertBefore(statstable, document.body.firstChild);
+    }
+
+    let maxChangeCell = document.getElementById('maxChange');
+    maxChangeCell.textContent = maxChange;
+    
+    let minChangeCell = document.getElementById('minChange');
+    minChangeCell.textContent = minChange;
+    
+    let avgChangeCell = document.getElementById('avgChange');
+    avgChangeCell.textContent = avgChange.toFixed(2);
+    
+    let medianChangeCell = document.getElementById('medianChange');
+    medianChangeCell.textContent = medianChange;
+    
+    let sdChangeCell = document.getElementById('sdChange');
+    sdChangeCell.textContent = sdChange.toFixed(2);
+    
     let table = document.getElementById('dataExtractorTable');
     if (!table) {
         // If the table doesn't exist yet, create it
@@ -149,9 +196,6 @@ function getStockValues() {
   return stockData;
 }
 
-
-
-
 function scrapeTableData() {
     console.log("scrapeTableData is running");
 
@@ -163,12 +207,16 @@ function scrapeTableData() {
 
     // Select all spans within the td element with the class 'screener-tickers'
     let spans = document.querySelectorAll('td.screener-tickers span');
+    let changes = [];
 
     spans.forEach((span) => {
         let textContent = span.getAttribute('data-boxover');
         let percentageIndex = textContent.lastIndexOf(': ');
         let percentage = parseFloat(textContent.slice(percentageIndex + 2, -1));
 
+        // Add percentage to changes array
+        changes.push(percentage);
+	
         // Log the percentage to the console
         // console.log(percentage);
 
@@ -181,6 +229,22 @@ function scrapeTableData() {
         }
     });
 
+    // Sorting changes for further use
+    changes.sort((a, b) => a - b);
+
+    // Maximum, minimum and average
+    let maxChange = changes[changes.length - 1];
+    let minChange = changes[0];
+    let avgChange = changes.reduce((a, b) => a + b, 0) / changes.length;
+
+    // Median
+    let middle = Math.floor(changes.length / 2);
+    let medianChange = changes.length % 2 !== 0 ? changes[middle] : (changes[middle - 1] + changes[middle]) / 2;
+
+    // Standard Deviation
+    let sdChange = Math.sqrt(changes.map(x => Math.pow(x - avgChange, 2)).reduce((a, b) => a + b) / changes.length);
+    
+    
     let stockData = getStockValues();
     
     let amazonValue = stockData['AMZN'];
@@ -212,10 +276,16 @@ function scrapeTableData() {
         googlValue: googlValue,
         metaValue: metaValue,
         microsoftValue: microsoftValue,
-        nvidiaValue: nvidiaValue
+        nvidiaValue: nvidiaValue,
+        maxChange: maxChange,
+        minChange: minChange,
+        avgChange: avgChange,
+        medianChange: medianChange,
+        sdChange: sdChange	
     });
 
-// Save the counts to the storage
+    // Save the counts to the storage
+    
     chrome.storage.sync.set({ aboveCount, belowCount, unchangedCount,
 			      amazonValue,
 			      appleValue,
@@ -223,7 +293,13 @@ function scrapeTableData() {
 			      googlValue,
 			      metaValue,
 			      microsoftValue,
-                              nvidiaValue});
+                              nvidiaValue,
+			      maxChange,
+			      minChange,
+			      avgChange,
+			      medianChange,
+			      sdChange
+			    });
 
     // Update the table
     updateTable(aboveCount, belowCount, unchangedCount,
@@ -233,8 +309,12 @@ function scrapeTableData() {
                               googlValue,
                               metaValue,
                               microsoftValue,
-                              nvidiaValue
-
+                nvidiaValue,
+		              maxChange,
+                              minChange,
+                              avgChange,
+                              medianChange,
+                              sdChange
 	       );
     
 }
